@@ -8,5 +8,30 @@ namespace TaskLibrary
 {
 	public class MyTask
 	{
+		internal MyTask()
+		{
+		}
+
+		private bool _isCompleted;
+		public bool IsCompleted
+		{
+			get => _isCompleted;
+			internal set
+			{
+				_isCompleted = value;
+
+				if (value)
+				{
+					_mutex.Set();
+				}
+			}
+		}
+
+		private readonly ManualResetEventSlim _mutex = new();
+
+		public void Wait()
+		{
+			_mutex.Wait();
+		}
 	}
 }
