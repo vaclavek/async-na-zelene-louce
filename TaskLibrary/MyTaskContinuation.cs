@@ -17,7 +17,7 @@ namespace TaskLibrary
 			_antecedent = antecedent;
 		}
 
-		internal void Invoke()
+		internal override void Invoke()
 		{
 			_action(_antecedent);
 			IsCompleted = true;
@@ -35,7 +35,7 @@ namespace TaskLibrary
 			_antecedent = antecedent;
 		}
 
-		internal void Invoke()
+		internal override void Invoke()
 		{
 			Result = _action(_antecedent);
 			IsCompleted = true;

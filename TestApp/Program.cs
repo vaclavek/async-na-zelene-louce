@@ -6,13 +6,15 @@ var task = AsyncMethod();
 
 task.ContinueWith((t) =>
 {
+	Console.WriteLine("Task completed with value " + t.Result);
+	return t.Result * 2;
 }).ContinueWith((t2) =>
 {
+	Console.WriteLine("Second task completed with value " + t2.Result);
 });
 
 // task.Wait();
 
-Console.WriteLine("Task completed with value " + task.Result);
 Console.WriteLine("Done");
 
 static MyTask<int> AsyncMethod()
