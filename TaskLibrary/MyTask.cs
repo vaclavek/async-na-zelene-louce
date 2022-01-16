@@ -34,4 +34,9 @@ namespace TaskLibrary
 			_mutex.Wait();
 		}
 	}
+
+	public class MyTask<T> : MyTask
+	{
+		public T Result { get; internal set; }
+	}
 }

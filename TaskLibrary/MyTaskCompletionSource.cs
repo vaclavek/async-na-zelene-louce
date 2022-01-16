@@ -20,4 +20,20 @@ namespace TaskLibrary
 			Task.IsCompleted = true;
 		}
 	}
+
+	public class MyTaskCompletionSource<T> 
+	{
+		public MyTask<T> Task { get; }
+
+		public MyTaskCompletionSource()
+		{
+			Task = new();
+		}
+
+		public void Complete(T result)
+		{
+			Task.Result = result;
+			Task.IsCompleted = true;
+		}
+	}
 }
