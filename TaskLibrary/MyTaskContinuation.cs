@@ -11,7 +11,8 @@ namespace TaskLibrary
 		private MyTask _antecedent;
 		private Action<MyTask> _action;
 
-		public MyTaskContinuation(Action<MyTask> continuation, MyTask antecedent)
+		public MyTaskContinuation(Action<MyTask> continuation, MyTask antecedent, MyTaskScheduler scheduler = null)
+			: base(scheduler ?? MyTaskScheduler.Default)
 		{
 			_action = continuation;
 			_antecedent = antecedent;
@@ -29,7 +30,8 @@ namespace TaskLibrary
 		private MyTask _antecedent;
 		private Func<MyTask, T> _action;
 
-		public MyTaskContinuation(Func<MyTask, T> continuation, MyTask antecedent)
+		public MyTaskContinuation(Func<MyTask, T> continuation, MyTask antecedent, MyTaskScheduler scheduler = null)
+			: base(scheduler ?? MyTaskScheduler.Default)
 		{
 			_action = continuation;
 			_antecedent = antecedent;

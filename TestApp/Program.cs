@@ -6,6 +6,8 @@ var task = AsyncMethod();
 
 task.ContinueWith((t) =>
 {
+	Thread.Sleep(2000);
+
 	Console.WriteLine("Task completed with value " + t.Result);
 	return t.Result * 2;
 }).ContinueWith((t2) =>
@@ -13,7 +15,10 @@ task.ContinueWith((t) =>
 	Console.WriteLine("Second task completed with value " + t2.Result);
 });
 
-// task.Wait();
+task.ContinueWith((t) =>
+{
+	Console.WriteLine("Second continuation");
+});
 
 Console.WriteLine("Done");
 

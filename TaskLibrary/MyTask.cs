@@ -9,9 +9,12 @@ namespace TaskLibrary
 {
 	public class MyTask
 	{
-		internal MyTask()
+		internal MyTask(MyTaskScheduler scheduler = null)
 		{
+			Scheduler = scheduler;
 		}
+
+		public MyTaskScheduler Scheduler { get; }
 
 		private bool _isCompleted;
 		public bool IsCompleted
@@ -37,18 +40,18 @@ namespace TaskLibrary
 		}
 
 		private readonly ConcurrentQueue<MyTask> _continuations = new();
-		public MyTask ContinueWith(Action<MyTask> continuation)
+		public MyTask ContinueWith(Action<MyTask> continuation, MyTaskScheduler scheduler = null)
 		{
-			var task = new MyTaskContinuation(continuation, this);
+			var task = new MyTaskContinuation(continuation, this, scheduler);
 
 			AddContinuation(task);
 
 			return task;
 		}
 
-		public MyTask<T> ContinueWith<T>(Func<MyTask, T> continuation)
+		public MyTask<T> ContinueWith<T>(Func<MyTask, T> continuation, MyTaskScheduler scheduler = null)
 		{
-			var task = new MyTaskContinuation<T>(continuation, this);
+			var task = new MyTaskContinuation<T>(continuation, this, scheduler);
 
 			AddContinuation(task);
 
@@ -84,18 +87,23 @@ namespace TaskLibrary
 	{
 		public T Result { get; internal set; }
 
-		public MyTask ContinueWith(Action<MyTask<T>> continuation)
+		internal MyTask(MyTaskScheduler scheduler = null)
+			: base(scheduler)
 		{
-			var task = new MyTaskContinuation(f => continuation((MyTask<T>)f), this);
+		}
+
+		public MyTask ContinueWith(Action<MyTask<T>> continuation, MyTaskScheduler scheduler = null)
+		{
+			var task = new MyTaskContinuation(f => continuation((MyTask<T>)f), this, scheduler);
 
 			AddContinuation(task);
 
 			return task;
 		}
 
-		public MyTask<TResult> ContinueWith<TResult>(Func<MyTask<T>, TResult> continuation)
+		public MyTask<TResult> ContinueWith<TResult>(Func<MyTask<T>, TResult> continuation, MyTaskScheduler scheduler = null)
 		{
-			var task = new MyTaskContinuation<TResult>(f => continuation((MyTask<T>)f), this);
+			var task = new MyTaskContinuation<TResult>(f => continuation((MyTask<T>)f), this, scheduler);
 
 			AddContinuation(task);
 
