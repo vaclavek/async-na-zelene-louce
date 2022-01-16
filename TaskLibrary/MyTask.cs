@@ -63,7 +63,7 @@ namespace TaskLibrary
 			// todo: race condition
 			if (IsCompleted)
 			{
-				continuation.Invoke();
+				continuation.ScheduleAndStart();
 				return;
 			}
 			_continuations.Enqueue(continuation);
@@ -73,8 +73,13 @@ namespace TaskLibrary
 		{
 			while (_continuations.TryDequeue(out MyTask continuation))
 			{
-				continuation.Invoke();
+				continuation.ScheduleAndStart();
 			}
+		}
+
+		private void ScheduleAndStart()
+		{
+			Scheduler.QueueTask(this);
 		}
 
 		internal virtual void Invoke()

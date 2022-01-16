@@ -21,6 +21,7 @@ task.ContinueWith((t) =>
 });
 
 Console.WriteLine("Done");
+Console.ReadLine();
 
 static MyTask<int> AsyncMethod()
 {

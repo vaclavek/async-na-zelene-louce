@@ -12,7 +12,10 @@ namespace TaskLibrary
 		protected internal abstract void QueueTask(MyTask task);
 		protected void ExecuteTask(MyTask task)
 		{
-			// TODO: Check scheduler
+			if (task.Scheduler != this)
+			{
+				throw new NotSupportedException();
+			}
 			task.Invoke();
 		}
 	}
