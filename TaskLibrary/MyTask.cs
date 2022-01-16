@@ -56,5 +56,23 @@ namespace TaskLibrary
 	public class MyTask<T> : MyTask
 	{
 		public T Result { get; internal set; }
+
+		public MyTask ContinueWith(Action<MyTask<T>> continuation)
+		{
+			var task = new MyTaskContinuation(f => continuation((MyTask<T>)f), this);
+
+			// AddContinuation(task);
+
+			return task;
+		}
+
+		public MyTask<TResult> ContinueWith<TResult>(Func<MyTask<T>, TResult> continuation)
+		{
+			var task = new MyTaskContinuation<TResult>(f => continuation((MyTask<T>)f), this);
+
+			// AddContinuation(task);
+
+			return task;
+		}
 	}
 }
