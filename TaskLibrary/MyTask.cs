@@ -42,6 +42,15 @@ namespace TaskLibrary
 
 			return task;
 		}
+
+		public MyTask<T> ContinueWith<T>(Func<MyTask, T> continuation)
+		{
+			var task = new MyTaskContinuation<T>(continuation, this);
+
+			// AddContinuation(task);
+
+			return task;
+		}
 	}
 
 	public class MyTask<T> : MyTask

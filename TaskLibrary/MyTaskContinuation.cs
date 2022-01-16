@@ -23,4 +23,22 @@ namespace TaskLibrary
 			IsCompleted = true;
 		}
 	}
+
+	internal class MyTaskContinuation<T> : MyTask<T>
+	{
+		private MyTask _antecedent;
+		private Func<MyTask, T> _action;
+
+		public MyTaskContinuation(Func<MyTask, T> continuation, MyTask antecedent)
+		{
+			_action = continuation;
+			_antecedent = antecedent;
+		}
+
+		internal void Invoke()
+		{
+			Result = _action(_antecedent);
+			IsCompleted = true;
+		}
+	}
 }

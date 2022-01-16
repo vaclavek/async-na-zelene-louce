@@ -6,10 +6,8 @@ var task = AsyncMethod();
 
 task.ContinueWith((t) =>
 {
-
 }).ContinueWith((t2) =>
 {
-
 });
 
 // task.Wait();
