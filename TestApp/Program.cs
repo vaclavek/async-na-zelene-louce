@@ -5,16 +5,17 @@ Console.WriteLine("Start");
 var task = AsyncMethod();
 task.Wait();
 
+Console.WriteLine("Task completed with value " + task.Result);
 Console.WriteLine("Done");
 
-static MyTask AsyncMethod()
+static MyTask<int> AsyncMethod()
 {
-	var tcs = new MyTaskCompletionSource();
+	var tcs = new MyTaskCompletionSource<int>();
 
 	var thread = new Thread(() =>
 	{
 		Thread.Sleep(1000);
-		tcs.Complete();
+		tcs.Complete(42);
 	});
 
 	thread.Start();
