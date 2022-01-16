@@ -3,7 +3,16 @@
 Console.WriteLine("Start");
 
 var task = AsyncMethod();
-task.Wait();
+
+task.ContinueWith((t) =>
+{
+
+}).ContinueWith((t2) =>
+{
+
+});
+
+// task.Wait();
 
 Console.WriteLine("Task completed with value " + task.Result);
 Console.WriteLine("Done");

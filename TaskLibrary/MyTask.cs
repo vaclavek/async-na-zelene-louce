@@ -33,6 +33,15 @@ namespace TaskLibrary
 		{
 			_mutex.Wait();
 		}
+
+		public MyTask ContinueWith(Action<MyTask> continuation)
+		{
+			var task = new MyTaskContinuation(continuation, this);
+
+			// AddContinuation(task);
+
+			return task;
+		}
 	}
 
 	public class MyTask<T> : MyTask
