@@ -71,6 +71,16 @@ namespace TaskLibrary
 
 		private void InvokeContinuations()
 		{
+			if (_continuations.Count == 1)
+			{
+				_continuations.TryDequeue(out var continuation);
+				if (!continuation.Scheduler.TryExecuteTaskInline(continuation))
+				{
+					continuation.ScheduleAndStart();
+				}
+				return;
+			}
+
 			while (_continuations.TryDequeue(out MyTask continuation))
 			{
 				continuation.ScheduleAndStart();

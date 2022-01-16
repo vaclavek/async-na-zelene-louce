@@ -18,6 +18,11 @@ namespace TaskLibrary
 			}
 			task.Invoke();
 		}
+
+		protected virtual internal bool TryExecuteTaskInline(MyTask task)
+		{
+			return false;
+		}
 	}
 
 	public class MyThreadPoolTaskScheduler : MyTaskScheduler
@@ -25,6 +30,17 @@ namespace TaskLibrary
 		protected internal override void QueueTask(MyTask task)
 		{
 			ThreadPool.QueueUserWorkItem(_ => ExecuteTask(task), null);
+		}
+
+		protected internal override bool TryExecuteTaskInline(MyTask task)
+		{
+			Console.WriteLine("*** Inlining");
+			if(Thread.CurrentThread.IsThreadPoolThread)
+			{
+				ExecuteTask(task);
+				return true;
+			}
+			return false;
 		}
 	}
 }
