@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -34,6 +35,8 @@ namespace TaskLibrary
 
 	public struct MyTaskBuilder<T>
 	{
+		private IAsyncStateMachine _stateMachine;
+
 		private MyTask<T> _task;
 		public MyTask<T> Task
 		{
@@ -53,13 +56,28 @@ namespace TaskLibrary
 			Task.IsCompleted = true;
 		}
 
-		public void AwaitOnCompleted<TAwaiter>(TAwaiter awaiter, IAsyncStateMachine stateMachine)
-			where TAwaiter : IAwaiter<T>
+		public void SetStateMachine(IAsyncStateMachine stateMachine)
 		{
-			awaiter.OnCompleted(stateMachine.MoveNext);
+			_stateMachine = stateMachine;
 		}
 
-		public void Start(IAsyncStateMachine stateMachine)
+		public void AwaitOnCompleted<TAwaiter, TAsyncStateMachine>(ref TAwaiter awaiter, ref TAsyncStateMachine stateMachine)
+			where TAwaiter : IAwaiter<T>
+			where TAsyncStateMachine: IAsyncStateMachine
+		{
+			_ = Task;
+			if(_stateMachine == null)
+			{
+				Console.WriteLine("Boxing");
+				var boxedStateMachine = (IAsyncStateMachine)stateMachine;
+				_stateMachine = boxedStateMachine;
+				boxedStateMachine.SetStateMachine(boxedStateMachine);
+			}
+			awaiter.OnCompleted(_stateMachine.MoveNext);
+}
+
+		public void Start<TAsyncStateMachine>(ref TAsyncStateMachine stateMachine)
+			where TAsyncStateMachine: IAsyncStateMachine
 		{
 			// save context
 			stateMachine.MoveNext();
@@ -70,6 +88,7 @@ namespace TaskLibrary
 	public interface IAsyncStateMachine
 	{
 		void MoveNext();
+		void SetStateMachine(IAsyncStateMachine stateMachine);
 	}
 
 	public static class MyTaskExtensions
@@ -101,7 +120,7 @@ namespace TaskLibrary
 		{
 			var stateMachine = new StateMachine();
 			stateMachine.This = this;
-			stateMachine.Builder.Start(stateMachine);
+			stateMachine.Builder.Start(ref stateMachine);
 			return stateMachine.Builder.Task;
 		}
 
@@ -118,6 +137,11 @@ namespace TaskLibrary
 			private int _j;
 			private int _k;
 
+			public void SetStateMachine(IAsyncStateMachine stateMachine)
+			{
+				Builder.SetStateMachine(stateMachine);
+			}
+
 			public void MoveNext()
 			{
 				switch(_state)
@@ -132,7 +156,7 @@ namespace TaskLibrary
 							{
 								goto case 1;
 							}
-							Builder.AwaitOnCompleted(_awaiter, this);
+							Builder.AwaitOnCompleted(ref _awaiter,ref  this);
 
 							return;
 						}
@@ -148,7 +172,7 @@ namespace TaskLibrary
 							{
 								goto case 2;
 							}
-							Builder.AwaitOnCompleted(_awaiter, this);
+							Builder.AwaitOnCompleted(ref _awaiter,ref  this);
 
 							return;
 						}
@@ -164,7 +188,7 @@ namespace TaskLibrary
 							{
 								goto case 3;
 							}
-							Builder.AwaitOnCompleted(_awaiter, this);
+							Builder.AwaitOnCompleted(ref _awaiter,ref  this);
 
 							return;
 						}
@@ -180,7 +204,7 @@ namespace TaskLibrary
 							{
 								goto case 4;
 							}
-							Builder.AwaitOnCompleted(_awaiter, this);
+							Builder.AwaitOnCompleted(ref _awaiter, ref this);
 
 							return;
 						}
