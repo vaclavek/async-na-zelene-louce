@@ -17,10 +17,12 @@ namespace TaskLibrary
 	public struct MyTaskAwaiter<T> : IAwaiter<T>
 	{
 		private readonly MyTask<T> _task;
+		private readonly bool _captureContext;
 
-		public MyTaskAwaiter(MyTask<T> task)
+		public MyTaskAwaiter(MyTask<T> task, bool captureContext)
 		{
 			_task = task;
+			_captureContext = captureContext;
 		}
 
 		public T GetResult() => _task.Result;
@@ -29,7 +31,11 @@ namespace TaskLibrary
 
 		public void OnCompleted(Action action)
 		{
-			var currentSynchronizationContext = SynchronizationContext.Current;
+			SynchronizationContext currentSynchronizationContext = null;
+			if (_captureContext)
+			{
+				currentSynchronizationContext = SynchronizationContext.Current;
+			}
 			_task.ContinueWith(_ =>
 			{
 				if (currentSynchronizationContext != null)
@@ -110,11 +116,33 @@ namespace TaskLibrary
 		}
 	}
 
+	public struct ConfiguredTaskAwaitable<T>
+	{
+		private readonly MyTask<T> _task;
+		private readonly bool _captureContext;
+
+		public ConfiguredTaskAwaitable(MyTask<T> task, bool captureContext)
+		{
+			_task = task;
+			_captureContext = captureContext;
+		}
+
+		public MyTaskAwaiter<T> GetAwaiter()
+		{
+			return new MyTaskAwaiter<T>(_task, _captureContext);
+		}
+	}
+
 	public static class MyTaskExtensions
 	{
 		public static MyTaskAwaiter<T> GetAwaiter<T>(this MyTask<T> task)
 		{
-			return new MyTaskAwaiter<T>(task);
+			return new MyTaskAwaiter<T>(task, true);
+		}
+
+		public static ConfiguredTaskAwaitable<T> ConfigureAwait<T>(this MyTask<T> task, bool captureContext)
+		{
+			return new ConfiguredTaskAwaitable<T>(task, captureContext);
 		}
 	}
 
@@ -129,10 +157,10 @@ namespace TaskLibrary
 		{
 			// sync code
 			DisplayCurrentSynchronizationContext();
-			int i = await DoSomethingAsync1();
+			int i = await DoSomethingAsync1().ConfigureAwait(true);
 			
 			DisplayCurrentSynchronizationContext();
-			int j = await DoSomethingAsync2();
+			int j = await DoSomethingAsync2().ConfigureAwait(false);
 			
 			DisplayCurrentSynchronizationContext();
 			int k = await DoSomethingAsync3();
