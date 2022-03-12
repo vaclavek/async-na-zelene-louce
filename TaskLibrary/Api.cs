@@ -6,6 +6,40 @@ using System.Threading.Tasks;
 
 namespace TaskLibrary
 {
+	public interface IAwaiter<T>
+	{
+		T GetResult();
+		bool IsCompleted { get; }
+		void OnCompleted(Action action);
+	}
+
+	public struct MyTaskAwaiter<T> : IAwaiter<T>
+	{
+		private readonly MyTask<T> _task;
+
+		public MyTaskAwaiter(MyTask<T> task)
+		{
+			_task = task;
+		}
+
+		public T GetResult() => _task.Result;
+
+		public bool IsCompleted => _task.IsCompleted;
+
+		public void OnCompleted(Action action)
+		{
+			_task.ContinueWith(_ => action());
+		}
+	}
+
+	public static class MyTaskExtensions
+	{
+		public static MyTaskAwaiter<T> GetAwaiter<T>(this MyTask<T> task)
+		{
+			return new MyTaskAwaiter<T>(task);
+		}
+	}
+
 	public class Api
 	{
 		public static void DisplayCurrentSynchronizationContext()
