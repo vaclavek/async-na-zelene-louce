@@ -34,7 +34,7 @@ namespace TaskLibrary
 
 		protected internal override bool TryExecuteTaskInline(MyTask task)
 		{
-			Console.WriteLine("*** Inlining");
+			// Console.WriteLine("*** Inlining");
 			if(Thread.CurrentThread.IsThreadPoolThread)
 			{
 				ExecuteTask(task);

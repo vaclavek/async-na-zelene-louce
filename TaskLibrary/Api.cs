@@ -32,6 +32,34 @@ namespace TaskLibrary
 		}
 	}
 
+	public class MyTaskBuilder<T>
+	{
+		public MyTask<T> Task { get; } = new();
+
+		public void SetResult(T result)
+		{
+			Task.Result = result;
+			Task.IsCompleted = true;
+		}
+
+		public async void AwaitOnCompleted(IAwaiter<T> awaiter, IAsyncStateMachine stateMachine)
+		{
+			awaiter.OnCompleted(stateMachine.MoveNext);
+		}
+
+		public void Start(IAsyncStateMachine stateMachine)
+		{
+			// save context
+			stateMachine.MoveNext();
+			// restore context
+		}
+	}
+
+	public interface IAsyncStateMachine
+	{
+		void MoveNext();
+	}
+
 	public static class MyTaskExtensions
 	{
 		public static MyTaskAwaiter<T> GetAwaiter<T>(this MyTask<T> task)
@@ -61,18 +89,18 @@ namespace TaskLibrary
 		{
 			var stateMachine = new StateMachine();
 			stateMachine.This = this;
-			stateMachine.MoveNext();
+			stateMachine.Builder.Start(stateMachine);
 			return stateMachine.Builder.Task;
 		}
 
-		class StateMachine
+		class StateMachine : IAsyncStateMachine
 		{
 			public Api This;
 
-			public MyTaskCompletionSource<int> Builder = new();
+			public MyTaskBuilder<int> Builder = new();
 
 			private int _state;
-			private MyTask<int> _awaiter;
+			private MyTaskAwaiter<int> _awaiter;
 
 			private int _i;
 			private int _j;
@@ -86,13 +114,13 @@ namespace TaskLibrary
 						{
 							_state = 1;
 							// sync code
-							_awaiter = This.DoSomethingAsync1();
+							_awaiter = This.DoSomethingAsync1().GetAwaiter();
 
 							if(_awaiter.IsCompleted)
 							{
 								goto case 1;
 							}
-							_awaiter.ContinueWith(_ => MoveNext());
+							Builder.AwaitOnCompleted(_awaiter, this);
 
 							return;
 						}
@@ -101,14 +129,14 @@ namespace TaskLibrary
 						{
 							_state = 2;
 
-							_i = _awaiter.Result;
+							_i = _awaiter.GetResult();
 
-							_awaiter = This.DoSomethingAsync2();
+							_awaiter = This.DoSomethingAsync2().GetAwaiter();
 							if (_awaiter.IsCompleted)
 							{
 								goto case 2;
 							}
-							_awaiter.ContinueWith(_ => MoveNext());
+							Builder.AwaitOnCompleted(_awaiter, this);
 
 							return;
 						}
@@ -117,14 +145,14 @@ namespace TaskLibrary
 						{
 							_state = 3;
 
-							_j = _awaiter.Result;
+							_j = _awaiter.GetResult();
 
-							_awaiter = This.DoSomethingAsync3();
+							_awaiter = This.DoSomethingAsync3().GetAwaiter();
 							if (_awaiter.IsCompleted)
 							{
 								goto case 3;
 							}
-							_awaiter.ContinueWith(_ => MoveNext());
+							Builder.AwaitOnCompleted(_awaiter, this);
 
 							return;
 						}
@@ -133,21 +161,21 @@ namespace TaskLibrary
 						{
 							_state = 4;
 
-							_k = _awaiter.Result;
+							_k = _awaiter.GetResult()								;
 
-							_awaiter = This.DoSomethingElseAsync(_i + _j + _k);
+							_awaiter = This.DoSomethingElseAsync(_i + _j + _k).GetAwaiter();
 							if (_awaiter.IsCompleted)
 							{
 								goto case 4;
 							}
-							_awaiter.ContinueWith(_ => MoveNext());
+							Builder.AwaitOnCompleted(_awaiter, this);
 
 							return;
 						}
 
 					case 4:
 						{
-							Builder.Complete(_awaiter.Result);
+							Builder.SetResult(_awaiter.GetResult());
 							return;
 						}
 
