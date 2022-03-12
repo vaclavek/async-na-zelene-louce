@@ -29,7 +29,18 @@ namespace TaskLibrary
 
 		public void OnCompleted(Action action)
 		{
-			_task.ContinueWith(_ => action());
+			var currentSynchronizationContext = SynchronizationContext.Current;
+			_task.ContinueWith(_ =>
+			{
+				if (currentSynchronizationContext != null)
+				{
+					currentSynchronizationContext.Post(_ => action(), null);
+				}
+				else
+				{
+					action();
+				}
+			});
 		}
 	}
 
@@ -117,10 +128,16 @@ namespace TaskLibrary
 		public async MyTask<int> CallAsync()
 		{
 			// sync code
+			DisplayCurrentSynchronizationContext();
 			int i = await DoSomethingAsync1();
+			
+			DisplayCurrentSynchronizationContext();
 			int j = await DoSomethingAsync2();
+			
+			DisplayCurrentSynchronizationContext();
 			int k = await DoSomethingAsync3();
 
+			DisplayCurrentSynchronizationContext();
 			return await DoSomethingElseAsync(i + j + k);
 		}
 

@@ -38,10 +38,13 @@ Console.WriteLine("Start");
 //	return tcs.Task;
 //}
 
-var task = new Api().CallAsync();
-task.Wait();
+//var task = new Api().CallAsync();
+//task.Wait();
 
-Console.WriteLine(task.Result);
+//Console.WriteLine(task.Result);
+
+var sc = new SingleThreadedSynchronizationContext();
+sc.Post(_ => new Api().CallAsync(), null);
 
 Console.WriteLine("Done");
 Console.ReadLine();
