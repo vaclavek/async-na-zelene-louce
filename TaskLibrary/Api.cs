@@ -32,9 +32,20 @@ namespace TaskLibrary
 		}
 	}
 
-	public class MyTaskBuilder<T>
+	public struct MyTaskBuilder<T>
 	{
-		public MyTask<T> Task { get; } = new();
+		private MyTask<T> _task;
+		public MyTask<T> Task
+		{
+			get
+			{
+				if(_task == null)
+				{
+					_task = new MyTask<T>();
+				}
+				return _task;
+			}
+		}
 
 		public void SetResult(T result)
 		{
@@ -42,7 +53,8 @@ namespace TaskLibrary
 			Task.IsCompleted = true;
 		}
 
-		public async void AwaitOnCompleted(IAwaiter<T> awaiter, IAsyncStateMachine stateMachine)
+		public void AwaitOnCompleted<TAwaiter>(TAwaiter awaiter, IAsyncStateMachine stateMachine)
+			where TAwaiter : IAwaiter<T>
 		{
 			awaiter.OnCompleted(stateMachine.MoveNext);
 		}
@@ -93,11 +105,11 @@ namespace TaskLibrary
 			return stateMachine.Builder.Task;
 		}
 
-		class StateMachine : IAsyncStateMachine
+		struct StateMachine : IAsyncStateMachine
 		{
 			public Api This;
 
-			public MyTaskBuilder<int> Builder = new();
+			public MyTaskBuilder<int> Builder;
 
 			private int _state;
 			private MyTaskAwaiter<int> _awaiter;
