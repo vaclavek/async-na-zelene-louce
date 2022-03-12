@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TaskLibrary
 {
-	public interface IAwaiter<T>
+	public interface IAwaiter<T> : INotifyCompletion
 	{
 		T GetResult();
 		bool IsCompleted { get; }
@@ -42,7 +42,7 @@ namespace TaskLibrary
 		{
 			get
 			{
-				if(_task == null)
+				if (_task == null)
 				{
 					_task = new MyTask<T>();
 				}
@@ -50,10 +50,17 @@ namespace TaskLibrary
 			}
 		}
 
+		public static MyTaskBuilder<T> Create() => new();
+
 		public void SetResult(T result)
 		{
 			Task.Result = result;
 			Task.IsCompleted = true;
+		}
+
+		public void SetException(Exception ex)
+		{
+			throw new NotImplementedException();
 		}
 
 		public void SetStateMachine(IAsyncStateMachine stateMachine)
@@ -63,10 +70,10 @@ namespace TaskLibrary
 
 		public void AwaitOnCompleted<TAwaiter, TAsyncStateMachine>(ref TAwaiter awaiter, ref TAsyncStateMachine stateMachine)
 			where TAwaiter : IAwaiter<T>
-			where TAsyncStateMachine: IAsyncStateMachine
+			where TAsyncStateMachine : IAsyncStateMachine
 		{
 			_ = Task;
-			if(_stateMachine == null)
+			if (_stateMachine == null)
 			{
 				Console.WriteLine("Boxing");
 				var boxedStateMachine = (IAsyncStateMachine)stateMachine;
@@ -74,21 +81,22 @@ namespace TaskLibrary
 				boxedStateMachine.SetStateMachine(boxedStateMachine);
 			}
 			awaiter.OnCompleted(_stateMachine.MoveNext);
-}
+		}
+
+		public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
+			where TAwaiter : IAwaiter<T>
+			where TStateMachine : IAsyncStateMachine
+		{
+			AwaitOnCompleted(ref awaiter, ref stateMachine);
+		}
 
 		public void Start<TAsyncStateMachine>(ref TAsyncStateMachine stateMachine)
-			where TAsyncStateMachine: IAsyncStateMachine
+			where TAsyncStateMachine : IAsyncStateMachine
 		{
 			// save context
 			stateMachine.MoveNext();
 			// restore context
 		}
-	}
-
-	public interface IAsyncStateMachine
-	{
-		void MoveNext();
-		void SetStateMachine(IAsyncStateMachine stateMachine);
 	}
 
 	public static class MyTaskExtensions
@@ -106,118 +114,14 @@ namespace TaskLibrary
 			Console.WriteLine(SynchronizationContext.Current?.ToString() ?? "No synchronization context");
 		}
 
-		//public async MyTask<int> CallAsync()
-		//{
-		//	// sync code
-		//	int i = await DoSomethingAsync1();
-		//	int j = await DoSomethingAsync2();
-		//	int k = await DoSomethingAsync3();
-
-		//	return await DoSomethingElseAsync(i + j + k);
-		//}
-
-		public MyTask<int> CallAsync()
+		public async MyTask<int> CallAsync()
 		{
-			var stateMachine = new StateMachine();
-			stateMachine.This = this;
-			stateMachine.Builder.Start(ref stateMachine);
-			return stateMachine.Builder.Task;
-		}
+			// sync code
+			int i = await DoSomethingAsync1();
+			int j = await DoSomethingAsync2();
+			int k = await DoSomethingAsync3();
 
-		struct StateMachine : IAsyncStateMachine
-		{
-			public Api This;
-
-			public MyTaskBuilder<int> Builder;
-
-			private int _state;
-			private MyTaskAwaiter<int> _awaiter;
-
-			private int _i;
-			private int _j;
-			private int _k;
-
-			public void SetStateMachine(IAsyncStateMachine stateMachine)
-			{
-				Builder.SetStateMachine(stateMachine);
-			}
-
-			public void MoveNext()
-			{
-				switch(_state)
-				{
-					case 0:
-						{
-							_state = 1;
-							// sync code
-							_awaiter = This.DoSomethingAsync1().GetAwaiter();
-
-							if(_awaiter.IsCompleted)
-							{
-								goto case 1;
-							}
-							Builder.AwaitOnCompleted(ref _awaiter,ref  this);
-
-							return;
-						}
-
-					case 1:
-						{
-							_state = 2;
-
-							_i = _awaiter.GetResult();
-
-							_awaiter = This.DoSomethingAsync2().GetAwaiter();
-							if (_awaiter.IsCompleted)
-							{
-								goto case 2;
-							}
-							Builder.AwaitOnCompleted(ref _awaiter,ref  this);
-
-							return;
-						}
-
-					case 2:
-						{
-							_state = 3;
-
-							_j = _awaiter.GetResult();
-
-							_awaiter = This.DoSomethingAsync3().GetAwaiter();
-							if (_awaiter.IsCompleted)
-							{
-								goto case 3;
-							}
-							Builder.AwaitOnCompleted(ref _awaiter,ref  this);
-
-							return;
-						}
-
-					case 3:
-						{
-							_state = 4;
-
-							_k = _awaiter.GetResult()								;
-
-							_awaiter = This.DoSomethingElseAsync(_i + _j + _k).GetAwaiter();
-							if (_awaiter.IsCompleted)
-							{
-								goto case 4;
-							}
-							Builder.AwaitOnCompleted(ref _awaiter, ref this);
-
-							return;
-						}
-
-					case 4:
-						{
-							Builder.SetResult(_awaiter.GetResult());
-							return;
-						}
-
-
-				}
-			}
+			return await DoSomethingElseAsync(i + j + k);
 		}
 
 		private MyTask<int> DoSomethingAsync1()

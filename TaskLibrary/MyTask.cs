@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -98,6 +99,7 @@ namespace TaskLibrary
 		}
 	}
 
+	[AsyncMethodBuilder(typeof(MyTaskBuilder<>))]
 	public class MyTask<T> : MyTask
 	{
 		public T Result { get; internal set; }
